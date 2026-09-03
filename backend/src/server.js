@@ -4,6 +4,7 @@ import cors from "cors";
 import "dotenv/config";
 import { inngest, functions } from "./inngest/index.js";
 import { serve } from "inngest/express";
+import indexRoutes from "./routes/index.routes.js";
 
 const app = express();
 const PORT = process.env.PORT || 8001;
@@ -32,6 +33,7 @@ app.use("/api/inngest", serve({ client: inngest, functions }));
 app.get("/", (req, res) => res.send("<h2>App is up</h2>"));
 
 //Routes
+app.use("/api/index", indexRoutes);
 
 //global error handler
 // app.use(errorHandler);
