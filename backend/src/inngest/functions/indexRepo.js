@@ -1,5 +1,5 @@
 import { inngest } from "../client.js";
-import { fetchRepoFiles } from "../../services/github.js";
+import { fetchRepoFiles, parseRepo } from "../../services/github.js";
 import { chunkFiles } from "../../services/chunking.js";
 import { saveChunks } from "../../services/vectorStore.js";
 
@@ -10,26 +10,38 @@ export const indexRepo = inngest.createFunction(
   },
 
   async ({ event, step }) => {
-    const { githubToken, owner, repo } = event.data;
+    const rawToken = event.data.githubToken || process.env.GITHUB_TOKEN;
+    const rawRepo = event.data.repo || "";
+    let owner = event.data.owner;
+    let repoName = rawRepo;
 
-    const repoName = repo.replace(/\.git$/, "");
+    // Auto-parse if owner is missing or full URL / repoKey is passed in repo
+    if (!owner && rawRepo) {
+      const parsed = parseRepo(rawRepo);
+      owner = parsed.owner;
+      repoName = parsed.repo;
+    } else {
+      repoName = repoName.replace(/\.git$/, "");
+    }
+
     const repoKey = `${owner}/${repoName}`;
 
-    //step 1
+    // Step 1: Fetch files from GitHub
     const files = await step.run("fetch-github-files", async () => {
-      return fetchRepoFiles(githubToken, owner, repoName);
+      return fetchRepoFiles(rawToken, owner, repoName);
     });
 
-    //step 2
+    // Step 2: Chunk the files
     const documents = await step.run("chunk-files", async () => {
       return chunkFiles(files, repoKey);
     });
 
-    //step 3
+    // Step 3: Save the chunks to Pinecone
     const saveResult = await step.run("save-to-pinecone", async () => {
       return saveChunks(repoKey, documents);
     });
 
+    // Return the summary result
     return {
       repo: repoKey,
       fileCount: files.length,
@@ -38,3 +50,4 @@ export const indexRepo = inngest.createFunction(
     };
   },
 );
+
