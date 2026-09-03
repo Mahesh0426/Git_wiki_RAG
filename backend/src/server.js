@@ -2,6 +2,8 @@ import express from "express";
 import morgan from "morgan";
 import cors from "cors";
 import "dotenv/config";
+import { inngest, functions } from "./inngest/index.js";
+import { serve } from "inngest/express";
 
 const app = express();
 const PORT = process.env.PORT || 8001;
@@ -23,8 +25,8 @@ app.use(express.urlencoded({ extended: true }));
 //morgan for logging
 app.use(morgan("dev"));
 
-//ingest routes
-// app.use("/api/inngest", serve({ client: inngest, functions }));
+//ingest serve routes
+app.use("/api/inngest", serve({ client: inngest, functions }));
 
 //sample route
 app.get("/", (req, res) => res.send("<h2>App is up</h2>"));
