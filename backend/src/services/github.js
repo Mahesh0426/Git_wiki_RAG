@@ -83,7 +83,7 @@ function shouldSkipFile(path, size) {
   return false;
 }
 
-//parse repo function
+//parse repo function - it extract owner and repo from the input string which can be a url or a repo key.
 export function parseRepo(input) {
   const clean = input
     .replace("https://github.com/", "")
