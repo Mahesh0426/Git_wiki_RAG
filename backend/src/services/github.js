@@ -85,12 +85,17 @@ function shouldSkipFile(path, size) {
 
 //parse repo function - it extract owner and repo from the input string which can be a url or a repo key.
 export function parseRepo(input) {
-  const clean = input
-    .replace("https://github.com/", "")
-    .replace("http://github.com/", "")
-    .replace(/\.git$/, "");
+  let clean = String(input || "").trim();
+  clean = clean
+    .replace(/^git@github\.com:/i, "")
+    .replace(/^(https?:\/\/)?(www\.)?github\.com\//i, "")
+    .split(/[?#]/)[0]
+    .replace(/\/+$/, "")
+    .replace(/\.git$/i, "");
 
-  const [owner, repo] = clean.split("/");
+  const parts = clean.split("/").filter(Boolean);
+  const owner = parts[0] || "";
+  const repo = parts[1] || "";
   return { owner, repo, repoKey: `${owner}/${repo}` };
 }
 
